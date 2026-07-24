@@ -108,6 +108,12 @@ input::placeholder{color:var(--ink-4);font-weight:500}
   </div>
 
   <div class="card">
+    <label class="label" for="siteUrl">공유 링크 설정 — 조회 페이지 주소</label>
+    <input type="url" id="siteUrl" placeholder="https://아이디.github.io/link-vault/" autocomplete="off">
+    <div class="field-note">GitHub Pages 주소를 입력해 두면 아래 목록에서 번호가 포함된 공유 링크를 바로 복사할 수 있습니다. (예: 주소 끝에 <b>?n=3</b>이 붙은 링크)</div>
+  </div>
+
+  <div class="card">
     <div class="list-head">
       <label class="label" style="margin:0">등록된 링크</label>
       <span class="cnt" id="cnt"></span>
@@ -240,6 +246,44 @@ function delEntry(num){
   showMsg('adminMsg','ok','삭제되었습니다. links.json을 다시 다운로드해 커밋해야 반영됩니다.');
 }
 
+/* ---------- 공유 링크 ---------- */
+const SITE_URL_KEY = 'link-vault-site-url';
+try{
+  const saved = localStorage.getItem(SITE_URL_KEY);
+  if(saved) $('siteUrl').value = saved;
+}catch(e){}
+$('siteUrl').addEventListener('input', () => {
+  try{ localStorage.setItem(SITE_URL_KEY, $('siteUrl').value.trim()); }catch(e){}
+});
+
+function shareUrl(num){
+  let base = $('siteUrl').value.trim();
+  if(!base) return null;
+  if(!/^https?:\/\//i.test(base)) base = 'https://' + base;
+  base = base.replace(/[#?].*$/,'');            // 기존 쿼리 제거
+  if(!/\.html$/i.test(base) && !base.endsWith('/')) base += '/';
+  return base + '?n=' + encodeURIComponent(num);
+}
+
+async function copyShare(num, btn){
+  const url = shareUrl(num);
+  if(!url){
+    showMsg('adminMsg','err','먼저 위의 "공유 링크 설정"에 조회 페이지 주소를 입력하세요.');
+    window.scrollTo({top:0, behavior:'smooth'});
+    return;
+  }
+  try{
+    await navigator.clipboard.writeText(url);
+  }catch(e){
+    /* 클립보드 권한이 없을 때 대체: prompt로 표시 */
+    prompt('아래 링크를 복사하세요:', url);
+    return;
+  }
+  const old = btn.textContent;
+  btn.textContent = '복사됨!';
+  setTimeout(()=>{ btn.textContent = old; }, 1200);
+}
+
 function renderList(){
   const list = $('list');
   $('cnt').textContent = entries.length + '개';
@@ -255,12 +299,14 @@ function renderList(){
       '<span class="e-num"></span>' +
       '<div class="e-body"><div class="e-name"></div><div class="e-meta">URL·비밀번호 암호화됨</div></div>' +
       '<div class="e-acts">' +
+        '<button class="btn btn-accent btn-sm">공유 링크 복사</button>' +
         '<button class="btn btn-ghost btn-sm">수정</button>' +
         '<button class="btn btn-danger-ghost btn-sm">삭제</button>' +
       '</div>';
     row.querySelector('.e-num').textContent = e.num;
     row.querySelector('.e-name').textContent = e.name || '(이름 없음)';
-    const [bEdit, bDel] = row.querySelectorAll('.e-acts .btn');
+    const [bShare, bEdit, bDel] = row.querySelectorAll('.e-acts .btn');
+    bShare.onclick = () => copyShare(String(e.num), bShare);
     bEdit.onclick = () => startEdit(String(e.num));
     bDel.onclick = () => delEntry(String(e.num));
     list.appendChild(row);

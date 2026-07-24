@@ -132,6 +132,14 @@ async function load(){
     entries = Array.isArray(data.entries) ? data.entries : [];
   }catch(e){
     showMsg('searchMsg','err','링크 데이터(links.json)를 불러오지 못했습니다. 관리자에게 문의하세요.');
+    return;
+  }
+  /* 공유 링크로 진입한 경우: ?n=번호 → 자동 조회 + 비밀번호 창 바로 열기 */
+  const n = new URLSearchParams(location.search).get('n');
+  if(n){
+    $('qNum').value = n.trim();
+    doSearch();
+    if(currentHit) $('btnOpen').click();
   }
 }
 
