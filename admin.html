@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>링크 관리 (links.json 생성기)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<style>
+:root{
+  --bg:#f4f5f7; --card:#fff; --ink:#16181d; --ink-2:#3c4048; --ink-3:#6b7078; --ink-4:#9ba0a8;
+  --line:#e4e6ea; --accent:#2456e6; --accent-soft:rgba(36,86,230,.08);
+  --danger:#e0453c; --ok:#0d9a5b; --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Pretendard",sans-serif;background:var(--bg);color:var(--ink-2);font-size:15px;line-height:1.6;font-weight:500;word-break:keep-all;overflow-wrap:break-word;font-feature-settings:"tnum";min-height:100vh}
+.wrap{max-width:560px;margin:0 auto;padding:40px 20px 80px}
+.head{margin-bottom:8px}
+.head h1{font-size:20px;font-weight:700;color:var(--ink);letter-spacing:-.01em}
+.head h1 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:8px;vertical-align:2px}
+.sub{font-size:13px;color:var(--ink-3);font-weight:500;margin-bottom:24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:28px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.card + .card{margin-top:16px}
+.label{font-size:12px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;display:block}
+input[type=text],input[type=url]{width:100%;font-family:inherit;font-size:15px;font-weight:500;color:var(--ink);border:1.5px solid var(--line);border-radius:10px;padding:11px 14px;background:#fff;transition:border-color .15s ease}
+input:focus{outline:none;border-color:var(--accent)}
+input::placeholder{color:var(--ink-4);font-weight:500}
+.btn{font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;border:none;border-radius:10px;padding:11px 20px;transition:all .15s ease}
+.btn-primary{background:var(--ink);color:#fff}
+.btn-primary:hover{background:#2b2f37}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover{filter:brightness(1.08)}
+.btn-ghost{background:transparent;color:var(--ink-3);border:1.5px solid var(--line)}
+.btn-ghost:hover{border-color:var(--ink-4);color:var(--ink)}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:8px}
+.btn-danger-ghost{background:transparent;color:var(--danger);border:1.5px solid transparent}
+.btn-danger-ghost:hover{background:rgba(224,69,60,.07)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.admin-form{display:grid;gap:14px}
+.admin-form .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:2px}
+.field-note{font-size:12px;color:var(--ink-4);font-weight:600;margin-top:6px}
+.list-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px}
+.list-head .cnt{font-size:12px;color:var(--ink-4);font-weight:600}
+.entry{display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--line)}
+.entry:last-child{border-bottom:none}
+.entry .e-num{font-size:13px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:8px;padding:3px 9px;white-space:nowrap;min-width:44px;text-align:center}
+.entry .e-body{flex:1;min-width:0}
+.entry .e-name{font-size:14px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.entry .e-meta{font-size:12px;color:var(--ink-4);font-weight:600}
+.entry .e-acts{display:flex;gap:4px;flex-shrink:0}
+.empty{padding:32px 0;text-align:center;color:var(--ink-4);font-size:13.5px;font-weight:600}
+.msg{margin-top:16px;font-size:13.5px;font-weight:600;padding:12px 16px;border-radius:10px;display:none}
+.msg.show{display:block;animation:pop .2s ease}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.msg.err{background:rgba(224,69,60,.08);color:var(--danger)}
+.msg.ok{background:rgba(13,154,91,.08);color:var(--ok)}
+.tool-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tool-note{font-size:12px;color:var(--ink-4);font-weight:600;margin-top:10px}
+.hidden{display:none!important}
+.notice{background:var(--accent-soft);border-radius:10px;padding:14px 16px;font-size:13px;font-weight:600;color:var(--ink-2);margin-bottom:16px}
+.notice b{color:var(--accent)}
+@media(max-width:480px){
+  .admin-form .row2{grid-template-columns:1fr}
+  .entry .e-acts{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1><span class="dot"></span>링크 관리</h1>
+  </div>
+  <p class="sub">링크를 등록·수정한 뒤 <b>links.json 다운로드</b>로 파일을 받아 GitHub 저장소에 커밋하면 조회 페이지에 반영됩니다.</p>
+
+  <div class="notice">
+    URL은 비밀번호로 <b>암호화되어</b> 저장됩니다. links.json에는 평문 URL과 비밀번호가 들어가지 않으며,
+    한 번 등록한 항목의 원본 URL·비밀번호는 이 화면에서도 다시 볼 수 없습니다 (수정 시 URL·비밀번호를 새로 입력).
+  </div>
+
+  <div class="card">
+    <label class="label" id="formTitle">새 링크 등록</label>
+    <div class="admin-form">
+      <div class="row2">
+        <div>
+          <label class="label" for="fNum">링크 번호</label>
+          <input type="text" id="fNum" placeholder="예: 1" autocomplete="off">
+        </div>
+        <div>
+          <label class="label" for="fPw">비밀번호</label>
+          <input type="text" id="fPw" placeholder="비밀번호" autocomplete="off">
+        </div>
+      </div>
+      <div>
+        <label class="label" for="fName">링크 이름</label>
+        <input type="text" id="fName" placeholder="예: 3월 정산 자료" autocomplete="off">
+      </div>
+      <div>
+        <label class="label" for="fUrl">링크 (URL)</label>
+        <input type="url" id="fUrl" placeholder="https://..." autocomplete="off">
+        <div class="field-note" id="editNote" style="display:none">수정 모드: URL과 비밀번호를 다시 입력해야 합니다 (암호화 저장이라 기존 값을 불러올 수 없음).</div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost hidden" id="btnCancelEdit">취소</button>
+        <button class="btn btn-primary" id="btnSave">저장</button>
+      </div>
+    </div>
+    <div class="msg" id="adminMsg"></div>
+  </div>
+
+  <div class="card">
+    <div class="list-head">
+      <label class="label" style="margin:0">등록된 링크</label>
+      <span class="cnt" id="cnt"></span>
+    </div>
+    <div class="list" id="list"><div class="empty">links.json을 불러오거나 새 링크를 추가하세요.</div></div>
+  </div>
+
+  <div class="card">
+    <label class="label">links.json 파일</label>
+    <div class="tool-row">
+      <button class="btn btn-accent" id="btnDownload">links.json 다운로드</button>
+      <button class="btn btn-ghost" id="btnLoad">기존 links.json 불러오기</button>
+      <input type="file" id="loadFile" accept=".json,application/json" class="hidden">
+    </div>
+    <div class="tool-note">
+      다운로드한 links.json을 저장소 루트(index.html 옆)에 넣고 커밋·푸시하세요.
+      기존 파일을 불러오면 이어서 추가·수정할 수 있습니다.
+    </div>
+    <div class="msg" id="dataMsg"></div>
+  </div>
+</div>
+
+<script>
+/* 이 페이지는 로컬에서 열어도 되고 Pages에 올려도 됩니다.
+   비밀 정보를 저장하지 않으며, 결과물(links.json)에는 암호문만 들어갑니다.
+   실제 반영은 저장소에 커밋할 수 있는 사람(당신)만 가능합니다. */
+let entries = [];        // [{num, name, salt, iv, data}]
+let editingNum = null;
+const $ = id => document.getElementById(id);
+
+function showMsg(id, type, text){
+  const el = $(id);
+  el.className = 'msg show ' + type;
+  el.textContent = text;
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>{ el.className='msg'; }, 4000);
+}
+function normalizeUrl(u){
+  u = u.trim();
+  if(!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  return u;
+}
+function sortEntries(){
+  entries.sort((a,b)=> (parseInt(a.num)||0) - (parseInt(b.num)||0) || String(a.num).localeCompare(String(b.num)));
+}
+
+/* ---------- 암호화 (index.html의 복호화와 짝) ---------- */
+const b64e = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+
+async function encryptUrl(url, pw){
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv   = crypto.getRandomValues(new Uint8Array(12));
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+  const key  = await crypto.subtle.deriveKey(
+    {name:'PBKDF2', salt, iterations:150000, hash:'SHA-256'},
+    base, {name:'AES-GCM', length:256}, false, ['encrypt']
+  );
+  const data = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, new TextEncoder().encode(url));
+  return { salt:b64e(salt), iv:b64e(iv), data:b64e(data) };
+}
+
+/* ---------- 등록/수정 ---------- */
+$('btnSave').onclick = saveEntry;
+$('btnCancelEdit').onclick = resetForm;
+
+async function saveEntry(){
+  const num = $('fNum').value.trim();
+  const name = $('fName').value.trim();
+  let url = $('fUrl').value.trim();
+  const pw = $('fPw').value;
+  if(!num || !url || !pw){ showMsg('adminMsg','err','번호·링크·비밀번호는 필수입니다.'); return; }
+  url = normalizeUrl(url);
+
+  const dup = entries.find(e => String(e.num) === num);
+  if(editingNum === null && dup){ showMsg('adminMsg','err','번호 ' + num + '은(는) 이미 등록되어 있습니다.'); return; }
+  if(editingNum !== null && num !== editingNum && dup){ showMsg('adminMsg','err','번호 ' + num + '은(는) 이미 등록되어 있습니다.'); return; }
+
+  $('btnSave').disabled = true;
+  $('btnSave').textContent = '암호화 중…';
+  try{
+    const enc = await encryptUrl(url, pw);
+    const rec = { num, name, ...enc };
+    if(editingNum !== null){
+      const i = entries.findIndex(e => String(e.num) === editingNum);
+      entries[i] = rec;
+    }else{
+      entries.push(rec);
+    }
+    sortEntries();
+    showMsg('adminMsg','ok', (editingNum !== null ? '수정' : '등록') + '되었습니다. 완료 후 links.json을 다운로드해 커밋하세요.');
+    resetForm();
+    renderList();
+  }catch(e){
+    showMsg('adminMsg','err','암호화에 실패했습니다. 브라우저를 최신 버전으로 사용하세요.');
+  }finally{
+    $('btnSave').disabled = false;
+    $('btnSave').textContent = editingNum !== null ? '수정 저장' : '저장';
+  }
+}
+
+function resetForm(){
+  editingNum = null;
+  $('fNum').value=''; $('fName').value=''; $('fUrl').value=''; $('fPw').value='';
+  $('formTitle').textContent = '새 링크 등록';
+  $('btnSave').textContent = '저장';
+  $('btnCancelEdit').classList.add('hidden');
+  $('editNote').style.display = 'none';
+}
+
+function startEdit(num){
+  const e = entries.find(x => String(x.num) === num);
+  if(!e) return;
+  editingNum = num;
+  $('fNum').value = e.num;
+  $('fName').value = e.name || '';
+  $('fUrl').value = '';
+  $('fPw').value = '';
+  $('formTitle').textContent = '링크 수정 — No. ' + num;
+  $('btnSave').textContent = '수정 저장';
+  $('btnCancelEdit').classList.remove('hidden');
+  $('editNote').style.display = 'block';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function delEntry(num){
+  if(!confirm('번호 ' + num + ' 링크를 삭제할까요?')) return;
+  entries = entries.filter(e => String(e.num) !== num);
+  if(editingNum === num) resetForm();
+  renderList();
+  showMsg('adminMsg','ok','삭제되었습니다. links.json을 다시 다운로드해 커밋해야 반영됩니다.');
+}
+
+function renderList(){
+  const list = $('list');
+  $('cnt').textContent = entries.length + '개';
+  if(!entries.length){
+    list.innerHTML = '<div class="empty">등록된 링크가 없습니다.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  entries.forEach(e => {
+    const row = document.createElement('div');
+    row.className = 'entry';
+    row.innerHTML =
+      '<span class="e-num"></span>' +
+      '<div class="e-body"><div class="e-name"></div><div class="e-meta">URL·비밀번호 암호화됨</div></div>' +
+      '<div class="e-acts">' +
+        '<button class="btn btn-ghost btn-sm">수정</button>' +
+        '<button class="btn btn-danger-ghost btn-sm">삭제</button>' +
+      '</div>';
+    row.querySelector('.e-num').textContent = e.num;
+    row.querySelector('.e-name').textContent = e.name || '(이름 없음)';
+    const [bEdit, bDel] = row.querySelectorAll('.e-acts .btn');
+    bEdit.onclick = () => startEdit(String(e.num));
+    bDel.onclick = () => delEntry(String(e.num));
+    list.appendChild(row);
+  });
+}
+
+/* ---------- links.json 다운로드 / 불러오기 ---------- */
+$('btnDownload').onclick = () => {
+  if(!entries.length){ showMsg('dataMsg','err','다운로드할 링크가 없습니다.'); return; }
+  const payload = { app:'link-vault', updatedAt:new Date().toISOString(), entries };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'links.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showMsg('dataMsg','ok','links.json을 다운로드했습니다. 저장소에 커밋·푸시하세요.');
+};
+
+$('btnLoad').onclick = () => $('loadFile').click();
+$('loadFile').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+  try{
+    const data = JSON.parse(await file.text());
+    const arr = Array.isArray(data.entries) ? data.entries : (Array.isArray(data) ? data : null);
+    if(!arr) throw new Error();
+    const valid = arr.filter(x => x && x.num && x.salt && x.iv && x.data);
+    entries = valid;
+    sortEntries();
+    resetForm();
+    renderList();
+    showMsg('dataMsg','ok', valid.length + '개 링크를 불러왔습니다.');
+  }catch(err){
+    showMsg('dataMsg','err','links.json 형식이 아닙니다. 이 페이지에서 다운로드한 파일을 사용하세요.');
+  }
+});
+</script>
+</body>
+</html>
