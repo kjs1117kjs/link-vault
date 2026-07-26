@@ -1,0 +1,13 @@
+{
+  "app": "link-vault",
+  "updatedAt": "2026-07-24T08:23:39.920Z",
+  "entries": [
+    {
+      "num": "20260724001",
+      "name": "ADMINTEST",
+      "salt": "eSaEr88tQxvw7tmmhQz1BA==",
+      "iv": "I7jomEQ/USdVRPht",
+      "data": "3vT8G9beTRTBnIFjm4mrBORQZOD0kRtm4VEVIA=="
+    }
+  ]
+}
