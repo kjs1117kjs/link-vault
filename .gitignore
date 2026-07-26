@@ -1,0 +1,5 @@
+﻿_git-env.ps1
+*.tmp
+~$*
+Thumbs.db
+desktop.ini
